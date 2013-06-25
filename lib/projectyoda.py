@@ -1,37 +1,65 @@
-import sys, subprocess, resources, configs
+import sys, os, subprocess, resources, configs
+
+args = []
+curl_success = []
+config = False
+test = True
+
+# parse args and set state for config
+def init():
+    for i in range (1, len(sys.argv)):
+        args.append(sys.argv[i])
+    if args[0] == '-c':
+        config = True
+        args.pop(0)
 
 # curl function
-def curl_resource(argv_offset):
-    for i in range (argv_offset, len(sys.argv)):
-        resource = resources.return_resource(sys.argv[i])
+def curl_resource(args):
+    for arg in args:
+        resource = resources.return_resource(arg)
         if resource != False:
-            print 'Grabbing ' + sys.argv[i]
-            curl_req = subprocess.Popen(['curl', '-LO', resource])
-            curl_req.wait() # wait for subprocess to finish before continuing with parent process
+            print 'Grabbing ' + arg
+            if not test:
+                curl_req = subprocess.Popen(['curl', '-LO', resource])
+                curl_req.wait() # wait for subprocess to finish before continuing with parent process
+                curl_success.append(arg)
         else:
-            print 'Invalid resource specified: ' + sys.argv[i]
+            print 'Invalid resource specified: ' + arg
+
+# unzip function
+def yoda_unzip(zips):
+    for zip_ref in zips:
+        print zip_ref
 
 # config function
-def run_config(argv_offset):
-    config = []
-    for i in range(argv_offset, len(sys.argv)):
-        config.append(sys.argv[i])
-    config_script = configs.return_config(config)
+def run_config(args):
+    config_script = configs.return_config(args)
     if config_script != False:
         print 'valid config'
+        print config_script
+        #build path to configs
+        path = os.path.dirname(os.path.realpath(__file__))
+        path += '/configs/'
+        path += config_script
+        config_exec = subprocess.Popen(['python', path])
+        config_exec.wait()
     else:
         print 'invalid config:'
-        print config
+        print args
 
 # execution
-if len(sys.argv) > 1:
-    if sys.argv[1] == '-c': # check for config switch
-        curl_resource(2)
-        run_config(2)
-    else:
-        curl_resource(1)
-else: 
-    print 'no args - should show help function'
+init()
+if config:
+        print 'config biatch'
+        curl_resource(args)
+        if len(curl_success):
+            yoda_unzip(curl_success)
+        run_config(args)
+else:
+    curl_resource(args)
+    if len(curl_success):
+        yoda_unzip(curl_success)
+      
 
 
 
