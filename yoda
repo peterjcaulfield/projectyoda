@@ -1,4 +1,6 @@
 #!/bin/sh
 
-python ~/bin/lib/projectyoda.py "$@"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+python $DIR/lib/projectyoda.py "$@"
 
