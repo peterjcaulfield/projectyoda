@@ -1,5 +1,7 @@
 import sys, os, subprocess, resources, configs
 
+#global output messages
+
 # parse args and set state for config
 def init():
     env = { 'args' : [], 'config' : False }
@@ -12,20 +14,26 @@ def init():
 
 # curl function
 def curl_resource(args):
-    curl_result = { 'curl_success' : False, 'curl_completes' : [], 'curl_failures' : [] }
+    curl_env = { 'curl_success' : False, 'curl_completes' : [], 'curl_failures' : [], 'valid_resources' : [], 'invalid_resources' : [] }
     for arg in args:
         resource = resources.return_resource(arg)
-        if resource != False:
-            print 'Grabbing ' + arg
-            curl_req = subprocess.Popen(['curl', '-LO', resource])
-            curl_req.wait() # wait for subprocess to finish before continuing with parent process
-            curl_result['curl_completes'].append(arg)
+        if resource:
+            curl_env['valid_resources'].append(arg)
         else:
-            print 'Invalid resource specified: ' + arg
-            curl_result['curl_failures'].append(arg)
-    if(len(curl_result['curl_completes']) == len(args)):
-        curl_result['curl_success'] = True
-    return curl_result
+            curl_env['invalid_resources'].append(arg)
+    if len(curl_env['valid_resources']) != len(args):
+        print 'invalid resources specified:'
+        print curl_env['invalid_resources']
+        print 'please check available resources with yoda -r'
+        print 'aborting'
+        return False
+    else:
+        for arg in args:
+            print 'Grabbing ' + arg
+            #curl_req = subprocess.Popen(['curl', '-LO', resource])
+            #curl_req.wait() # wait for subprocess to finish before continuing with parent process
+            #curl_result['curl_completes'].append(arg)
+        return True
 
 # unzip function
 def yoda_unzip(zips):
@@ -51,24 +59,16 @@ def run_config(args):
 # execution
 env = init()
 if env['config']:
-        print 'in config'
-        curl_stats = curl_resource(env['args'])
-        if curl_stats['curl_success']:
-            yoda_unzip(env['args'])
-            run_config(env['args'])
-        else:
-            print 'Cannot run config. Not all resources downloaded.'
-            print 'resources successfully downloaded:'
-            print curl_stats['curl_completes']
-            print 'resources specified:'
-            print env['args']
-else:
-    curl_stats = curl_resource(env['args'])
-    if curl_stats['curl_success']:
+    if curl_resource(env['args']):
+        print 'All resources downloaded successfully. Extracting archives.'
         yoda_unzip(env['args'])
-    else:
-        yoda_unzip(curl_stats['curl_completes'])
-      
+        print 'Running config'
+        run_config(env['args'])
+else:
+    if curl_resource(env['args']):
+        print 'All resources downloaded successfully. Extracting archives.'
+        yoda_unzip(env['args'])
+        
 
 
 
