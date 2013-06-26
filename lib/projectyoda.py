@@ -1,38 +1,75 @@
-import sys, os, subprocess, resources, configs
+''' 
+to do:
+    - check for valid config if a -c switch is specified in init?
+'''
 
-#global output messages
+import sys, os, subprocess, re, resources, configs
+
+valid_commands = ['grab', 'resources', 'configs', 'help']
 
 # parse args and set state for config
 def init():
-    env = { 'args' : [], 'config' : False }
-    for i in range (1, len(sys.argv)):
-        env['args'].append(sys.argv[i])
-    if env['args'][0] == '-c':
-        env['config'] = True
-        env['args'].pop(0)
-    return env
+    env = { 'args' : [], 'resources' : [], 'cmd' : False, 'switch' : False}
+    sys.argv.pop(0) # we dont need path
+    for arg in sys.argv:
+        env['args'].append(arg) # meh. feels cleaner to me.
+    
+    if env['args'][0] in valid_commands: # check cmd is valid
+        
+        if len(env['args']) > 1: # make sure we have minimum amount of args to check for switch/resource
+            env['cmd'] = env['args'][0]
+            
+            if re.match('^-', env['args'][1]): # check for switch
+                
+                if len(env['args']) > 2: # check for resource
+                    env['switch'] = env['args'][1]
+                    sys.argv.pop(0) # pop cmd
+                    sys.argv.pop(0) # pop switch
+                    env['resources'] = sys.argv # left with specified resources
+                else: 
+                    print 'No resource specified. Please see yoda help for cmd format' # no resource specified after switch
+                    return False
+            
+            else:
+                sys.argv.pop(0) # pop cmd
+                env['resources'] = sys.argv # left with specified resources
+            
+            invalid_resources = [] # check if resources exist
+            valid_resources = 0
+            for resource in env['resources']:
+                valid_resource = resources.return_resource(resource)
+                if valid_resource:
+                    valid_resources += 1
+                else:
+                    invalid_resources.append(resource)
+            if (len(env['resources']) != valid_resources):
+                print 'Invalid resources specified:'
+                print invalid_resources
+                print 'Please see yoda resources for available resources'
+                return False
+            else: # we have valid resources
+                print env
+                return env
+        
+        else:
+            print 'No resource specified. Please see yoda help for cmd format'
+            return False
+    
+    else:
+        print 'Invalid command: ' + env['args'][0]
+        print 'Valid commands are:'
+        print valid_commands
+        return False
+
 
 # curl function
 def curl_resource(args):
-    curl_env = { 'curl_success' : False, 'curl_completes' : [], 'curl_failures' : [], 'valid_resources' : [], 'invalid_resources' : [] }
+    curl_stats = {'successful' : [], 'failed' : []}
     for arg in args:
-        resource = resources.return_resource(arg)
-        if resource:
-            curl_env['valid_resources'].append(arg)
-        else:
-            curl_env['invalid_resources'].append(arg)
-    if len(curl_env['valid_resources']) != len(args):
-        print 'invalid resources specified:'
-        print curl_env['invalid_resources']
-        print 'please check available resources with yoda -r'
-        print 'aborting'
-        return False
-    else:
-        for arg in args:
-            print 'Grabbing ' + arg
-            #curl_req = subprocess.Popen(['curl', '-LO', resource])
-            #curl_req.wait() # wait for subprocess to finish before continuing with parent process
-            #curl_result['curl_completes'].append(arg)
+        print 'Grabbing ' + arg
+        #curl_req = subprocess.Popen(['curl', '-LO', resource])
+        #curl_req.wait() # wait for subprocess to finish before continuing with parent process
+        #curl_result['curl_completes'].append(arg)
         return True
 
 # unzip function
@@ -57,7 +94,10 @@ def run_config(args):
         print args
 
 # execution
+
 env = init()
+# needs to be redone to match new init function
+'''
 if env['config']:
     if curl_resource(env['args']):
         print 'All resources downloaded successfully. Extracting archives.'
@@ -69,7 +109,7 @@ else:
         print 'All resources downloaded successfully. Extracting archives.'
         yoda_unzip(env['args'])
         
-
+'''
 
 
 
