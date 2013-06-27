@@ -6,7 +6,7 @@ to do:
 
 '''
 
-import sys, os, subprocess, re, resources, configs
+import sys, os, subprocess, re, zipfile, time,  resources, configs
 
 valid_commands = ['grab', 'resources', 'configs', 'help']
 
@@ -58,24 +58,40 @@ def init():
      
 
 def grab(args):
+    
     valid_switches = ['-c']
-    # check we have args
+    curl_links = {}
+    zips = {}
+
+    # check we have args 
+    
     if len(args['args']) < 1:
         error_object = []
         error_object.append('No resource specified')
         raise yodaError(error_object)
+    
     else: # check resources
         check_resources(args['args'])
         print 'all resources valid'
-        print args
+        
+        # get the curl links
+        for resource in args['args']:
+            curl_links[resource] = resources.return_resource(resource)
+        # get name of each zip
+        for key, value in curl_links.iteritems():
+            zips[key] = os.path.basename(value)
+    
     # check if a switch was passed
     if args['switch']:
         # check if switch is valid
         if args['switch'] in valid_switches:
             print 'running code with switch: ' + args['switch']
-            curl_resource(args['args'])
-            yoda_unzip(args['args'])
-            # switch is valid so check if resources are valid
+            curl_resource(curl_links)
+            print 'running zip'
+            yoda_unzip(zips)
+            print 'running config'
+            run_config(args['args'])
+        
         else: # invalid switch given
             error_object = []
             error_object.append('Invalid switch specifed: ' + args['switch'])
@@ -83,8 +99,8 @@ def grab(args):
     # no switch passed
     else:
         print 'running without switch'
-        curl_resource(args['args'])
-        yoda_unzip(args['args'])
+        curl_resource(curl_links)
+        yoda_unzip(zips)
             
 def check_resources(args):
         invalid_resources = [] 
@@ -105,41 +121,27 @@ def check_resources(args):
             return True
 
 # curl function
-def curl_resource(args):
+def curl_resource(curl_links):
     curl_stats = {'successful' : [], 'failed' : []}
-    for arg in args:
-        print 'Grabbing ' + arg
-        #curl_req = subprocess.Popen(['curl', '-LO', resource])
-        #curl_req.wait() # wait for subprocess to finish before continuing with parent process
-        #curl_result['curl_completes'].append(arg)
-        return True
+    for key, value in curl_links.iteritems():
+        print 'Grabbing ' + key
+        curl_req = subprocess.Popen(['curl', '-LO', value])
+        curl_req.wait() # wait for subprocess to finish before continuing with parent process
+        curl_stats['successful'].append(key)
+    return True
 
 
 # unzip function
 def yoda_unzip(zips):
-    for zip_ref in zips:
-        zip_archive = os.path.basename(resources.return_resource(zip_ref))
-        print 'unzipping: ' + zip_archive
-        
-        zip = zipfile.ZipFile(filename)
-        name_list = zip.namelist()
-    
-        # obtain amount of files so we can do progress
-        file_count = 0
-        for item in name_list:
-            file_count += 1
-    
-        count = 0
-        for item in name_list:
-            #unzip
-            zip.extract(item)
-            count +=1
-            print count/file_count*100,"%          \r",
-            sys.stdout.flush() # stop buffering out output
-            time.sleep(0.1)
-        
-        print ""
-        zip.close()
+
+    for key, value in zips.iteritems():
+        print 'Extracting: ' + key
+        # using shell to unzip is broken in python < 2.6.5
+        unzip_shell_req = subprocess.Popen(['unzip', value])
+        unzip_shell_req.wait()
+        # clean up
+        os.remove(value)
+    print 'Extraction complete'
 
 # config function
 
@@ -155,6 +157,7 @@ def run_config(args):
         config_exec = subprocess.Popen(['python', path])
         config_exec.wait()
     else:
+        error_object = []
         error_object.append('invalid config:')
         error_object.append(args)
         raise yodaError(error_object)
