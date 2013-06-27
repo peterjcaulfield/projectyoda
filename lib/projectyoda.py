@@ -74,6 +74,7 @@ def grab(args):
         if args['switch'] in valid_switches:
             print 'running code with switch: ' + args['switch']
             curl_resource(args['args'])
+            yoda_unzip(args['args'])
             # switch is valid so check if resources are valid
         else: # invalid switch given
             error_object = []
@@ -83,6 +84,7 @@ def grab(args):
     else:
         print 'running without switch'
         curl_resource(args['args'])
+        yoda_unzip(args['args'])
             
 def check_resources(args):
         invalid_resources = [] 
@@ -116,9 +118,31 @@ def curl_resource(args):
 # unzip function
 def yoda_unzip(zips):
     for zip_ref in zips:
-        print zip_ref
+        zip_archive = os.path.basename(resources.return_resource(zip_ref))
+        print 'unzipping: ' + zip_archive
+        
+        zip = zipfile.ZipFile(filename)
+        name_list = zip.namelist()
+    
+        # obtain amount of files so we can do progress
+        file_count = 0
+        for item in name_list:
+            file_count += 1
+    
+        count = 0
+        for item in name_list:
+            #unzip
+            zip.extract(item)
+            count +=1
+            print count/file_count*100,"%          \r",
+            sys.stdout.flush() # stop buffering out output
+            time.sleep(0.1)
+        
+        print ""
+        zip.close()
 
 # config function
+
 def run_config(args):
     config_script = configs.return_config(args)
     if config_script != False:
