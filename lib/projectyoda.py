@@ -1,18 +1,18 @@
 ''' 
 to do:
+
     
-    - move checks relative to individual methods to those methods
-      i.e grab should check if a resource is valid not the init
 
 '''
 
 import sys, os, subprocess, re, zipfile, time,  resources, configs
 
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/yoda_classes')
+
+from yoda_exceptions import yodaError
+
 valid_commands = ['grab', 'resources', 'configs', 'help']
 
-class yodaError(Exception):
-    def __init__(self, value):
-        self.value = value
 
 # parse args and set state for config
 def init():
@@ -23,6 +23,7 @@ def init():
         error_object = []
         error_object.append('No arguments provided. See yoda help for cmd format')
         raise yodaError(error_object)
+
     # check if cmd is valid
     if sys.argv[0] in valid_commands:
         env['cmd'] = sys.argv[0]
@@ -35,17 +36,14 @@ def init():
                 if len(sys.argv) > 2:
                     for i in range(2, len(sys.argv)):
                         env['args'].append(sys.argv[i])
-                    print env
                     return env
                 else:
                     return env
             else: # no switch present
                 for i in range(1, len(sys.argv)):
                     env['args'].append(sys.argv[i])
-                print env
                 return env
         else: # no switch or args to cmd
-            print env
             return env
     
     else:
@@ -72,7 +70,6 @@ def grab(args):
     
     else: # check resources
         check_resources(args['args'])
-        print 'all resources valid'
         
         # get the curl links
         for resource in args['args']:
@@ -87,9 +84,7 @@ def grab(args):
         if args['switch'] in valid_switches:
             print 'running code with switch: ' + args['switch']
             curl_resource(curl_links)
-            print 'running zip'
             yoda_unzip(zips)
-            print 'running config'
             run_config(args['args'])
         
         else: # invalid switch given
@@ -125,6 +120,7 @@ def curl_resource(curl_links):
     curl_stats = {'successful' : [], 'failed' : []}
     for key, value in curl_links.iteritems():
         print 'Grabbing ' + key
+        # using shell child proccess because httplib
         curl_req = subprocess.Popen(['curl', '-LO', value])
         curl_req.wait() # wait for subprocess to finish before continuing with parent process
         curl_stats['successful'].append(key)
@@ -148,8 +144,6 @@ def yoda_unzip(zips):
 def run_config(args):
     config_script = configs.return_config(args)
     if config_script != False:
-        print 'valid config'
-        print config_script
         #build path to configs
         path = os.path.dirname(os.path.realpath(__file__))
         path += '/configs/'

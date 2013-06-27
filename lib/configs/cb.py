@@ -11,10 +11,10 @@
 
 import os, shutil, sys, yodapaths
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/yoda_classes')
 
-class yodaError(Exception):
-    def __init__(self, value):
-        self.value = value
+from yoda_exceptions import yodaError 
+
 
 # PATHS
 bootstrap_css = yodapaths.paths['bootstrap']['css']
