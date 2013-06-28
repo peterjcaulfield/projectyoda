@@ -172,18 +172,24 @@ def config():
 Execution
 
 '''
-try:
+
+def run_yoda():
+    yoda_commands = {
+
+            'grab' : grab,
+            'help' : help,
+            'configs' : config,
+            'resources' : resource
+
+            }
+
     env = init()
     cmd = env['cmd']
-    if cmd == 'grab':
-        grab(env)
-    elif cmd == 'help':
-        help()
-    elif cmd == 'config':
-        config()
-    elif cmd == 'resource':
-        resource()
+    yoda_commands[cmd](env)
+
+try:
+    run_yoda()
 except yoda_kill as e:
     for error_out in e.value:
         print error_out
-     
+
