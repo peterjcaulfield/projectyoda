@@ -13,7 +13,7 @@ import os, shutil, sys, yodapaths
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/yoda_classes')
 
-from yoda_exceptions import yodaError 
+from yoda_exceptions import yoda_kill 
 
 
 # PATHS
@@ -36,14 +36,13 @@ if os.path.exists(bootstrap_css) and os.path.exists(cakephp_css):
         shutil.move(bootstrap_css + file, cakephp_css)
     print 'css assets moved'
     successfully_moved += 1
-    print successfully_moved
 else:
     error_object = []
     error.object.append('Unable to move bootstrap css assets due to missing path')
     error.object.append('Verify the following paths exist in yodapaths.py: ')
     error_object.append(bootstrap_css)
     error_object.append(cakephp_css)
-    raise yodaError(error_object)
+    raise yoda_kill(error_object)
 
 if os.path.exists(bootstrap_js) and os.path.exists(cakephp_js):
     print 'moving twitter bootstrap javascript assets to cake js folder'
@@ -52,14 +51,13 @@ if os.path.exists(bootstrap_js) and os.path.exists(cakephp_js):
         shutil.move(bootstrap_js + file, cakephp_js)
     print 'javascript assets moved'
     successfully_moved += 1
-    print successfully_moved
 else:
     error_object = []
     error.object.append('Unable to move bootstrap js assets due to missing path')
     error.object.append('Verify the following paths exist in yodapaths.py: ')
     error_object.append(bootstrap_js)
     error_object.append(cakephp_js)
-    raise yodaError(error_object)
+    raise yoda_kill(error_object)
 
 if os.path.exists(bootstrap_img) and os.path.exists(cakephp_img):
     print 'moving twitter bootstrap img assets to cake img folder'
@@ -74,7 +72,7 @@ else:
     error.object.append('Verify the following paths exist in yodapaths.py: ')
     error_object.append(bootstrap_img)
     error_object.append(cakephp_img)
-    raise yodaError(error_object)
+    raise yoda_kill(error_object)
 
 if successfully_moved == items_to_move:
     print 'all assets moved successfully'

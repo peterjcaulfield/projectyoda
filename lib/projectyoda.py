@@ -9,7 +9,7 @@ import sys, os, subprocess, re, zipfile, time,  resources, configs
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/yoda_classes')
 
-from yoda_exceptions import yodaError
+from yoda_exceptions import yoda_kill
 
 valid_commands = ['grab', 'resources', 'configs', 'help']
 
@@ -22,7 +22,7 @@ def init():
     if len(sys.argv) < 1:
         error_object = []
         error_object.append('No arguments provided. See yoda help for cmd format')
-        raise yodaError(error_object)
+        raise yoda_kill(error_object)
 
     # check if cmd is valid
     if sys.argv[0] in valid_commands:
@@ -51,7 +51,7 @@ def init():
         error_object.append('Invalid command specified: ' + sys.argv[0])
         error_object.append('Valid commands are: ')
         error_object.append(valid_commands)
-        raise yodaError(error_object)
+        raise yoda_kill(error_object)
 
      
 
@@ -66,7 +66,7 @@ def grab(args):
     if len(args['args']) < 1:
         error_object = []
         error_object.append('No resource specified')
-        raise yodaError(error_object)
+        raise yoda_kill(error_object)
     
     else: # check resources
         check_resources(args['args'])
@@ -90,7 +90,7 @@ def grab(args):
         else: # invalid switch given
             error_object = []
             error_object.append('Invalid switch specifed: ' + args['switch'])
-            raise yodaError(error_object)
+            raise yoda_kill(error_object)
     # no switch passed
     else:
         print 'running without switch'
@@ -111,7 +111,7 @@ def check_resources(args):
             error_object.append('Invalid resources specified:')
             error_object.append(invalid_resources)
             error_object.append('Please see yoda resources for available resources')
-            raise yodaError(error_object)
+            raise yoda_kill(error_object)
         else: # we have valid resources
             return True
 
@@ -154,13 +154,36 @@ def run_config(args):
         error_object = []
         error_object.append('invalid config:')
         error_object.append(args)
-        raise yodaError(error_object)
+        raise yoda_kill(error_object)
 
-# execution
+ 
+
+def help():
+    print 'in help'
+
+def resource():
+    print 'in resource'
+
+def config():
+    print 'in config'
+
+'''
+
+Execution
+
+'''
 try:
-    grab(init())
-except yodaError as e:
-    for error_msg  in e.value:
-        print error_msg
-
-
+    env = init()
+    cmd = env['cmd']
+    if cmd == 'grab':
+        grab(env)
+    elif cmd == 'help':
+        help()
+    elif cmd == 'config':
+        config()
+    elif cmd == 'resource':
+        resource()
+except yoda_kill as e:
+    for error_out in e.value:
+        print error_out
+     
